@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Purple Messenger</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f3ff; height: 100vh; overflow: hidden; }
+    
+    /* Login Screen */
+    .login-screen {
+      display: flex; align-items: center; justify-content: center;
+      height: 100vh; background: linear-gradient(135deg, #7c3aed, #a855f7);
+    }
+    .login-box {
+      background: white; padding: 40px; border-radius: 20px; width: 90%; max-width: 350px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center;
+    }
+    .login-box h1 { color: #7c3aed; margin-bottom: 20px; }
+    .login-box input {
+      width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #e5e7eb;
+      border-radius: 10px; font-size: 16px; outline: none;
+    }
+    .login-box button {
+      width: 100%; padding: 12px; background: #7c3aed; color: white; border: none;
+      border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;
+    }
+
+    /* App Layout */
+    .app { display: none; height: 100vh; display: flex; }
+    .app.active { display: flex; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 340px; background: white; border-right: 1px solid #e5e7eb;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-header {
+      padding: 15px; background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white; display: flex; justify-content: space-between; align-items: center;
+    }
+    .coins-display {
+      background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px;
+      font-size: 14px; font-weight: bold;
+    }
+    .tabs { display: flex; padding: 10px; gap: 5px; background: white; border-bottom: 1px solid #e5e7eb; }
+    .tab-btn {
+      flex: 1; padding: 8px; border: none; background: #f3f4f6; border-radius: 8px;
+      cursor: pointer; font-size: 12px; font-weight: 600;
+    }
+    .tab-btn.active { background: #7c3aed; color: white; }
+    .search-box { padding: 10px; }
+    .search-box input {
+      width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px;
+    }
+    
+    .user-list { flex: 1; overflow-y: auto; padding: 10px; }
+    .user-item {
+      display: flex; align-items: center; padding: 10px; border-radius: 12px;
+      cursor: pointer; margin-bottom: 5px;
+    }
+    .user-item:hover, .user-item.active { background: #f5f3ff; }
+    .user-avatar {
+      width: 40px; height: 40px; background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-weight: bold; margin-right: 10px; font-size: 18px;
+    }
+    .user-avatar img {
+      width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+    }
+    .user-info { flex: 1; overflow: hidden; }
+    .user-name {
+      font-weight: 600; font-size: 15px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .admin-badge {
+      display: inline-block; color: #ef4444; font-size: 14px; margin-left: 5px;
+    }
+    .user-last-msg {
+      font-size: 13px; color: #6b7280; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    
+    /* Badges */
+    .badge { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 5px; vertical-align: middle; }
+    .online { background: #22c55e; }
+    .offline { background: #9ca3af; }
+
+    /* Chat Area */
+    .chat-area {
+      flex: 1; display: flex; flex-direction: column; background: #f5f3ff;
+      position: relative;
+    }
+    .chat-header {
+      padding: 15px; background: white; border-bottom: 1px solid #e5e7eb;
+      display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .chat-header .user-avatar { width: 35px; height: 35px; font-size: 14px; margin-right: 10px; }
+    
+    /* Messages */
+    .messages {
+      flex: 1; overflow-y: auto; padding: 20px; display: flex;
+      flex-direction: column; gap: 8px; padding-bottom: 90px;
+    }
+    .message {
+      max-width: 75%; padding: 10px 14px; border-radius: 18px;
+      font-size: 15px; line-height: 1.4; word-wrap: break-word;
+    }
+    .sent {
+      align-self: flex-end; background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white; border-bottom-right-radius: 4px;
+    }
+    .received {
+      align-self: flex-start; background: white; border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .message img, .message video { max-width: 100%; border-radius: 10px; margin-top: 5px; }
+    .message audio { width: 200px; margin-top: 5px; }
+    .msg-sender { font-size: 11px; color: #7c3aed; margin-bottom: 2px; font-weight: bold; }
+    .sent .msg-sender { color: rgba(255,255,255,0.8); text-align: right; }
+    .msg-time { font-size: 10px; opacity: 0.7; text-align: right; margin-top: 4px; }
+    .gift-message {
+      font-size: 40px; text-align: center; padding: 20px;
+      animation: giftPop 0.5s ease;
+    }
+    @keyframes giftPop {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    /* Input Area */
+    .input-area {
+      padding: 10px; background: white; border-top: 1px solid #e5e7eb;
+      display: flex; align-items: flex-end; gap: 8px;
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+    }
+    .input-actions button {
+      width: 36px; height: 36px; border: none; border-radius: 50%;
+      background: #f3f4f6; color: #7c3aed; font-size: 18px; cursor: pointer;
+    }
+    .text-input-wrapper { flex: 1; }
+    .text-input-wrapper textarea {
+      width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb;
+      border-radius: 20px; font-size: 15px; resize: none; outline: none;
+      max-height: 100px;
+    }
+    .send-btn {
+      width: 40px; height: 40px; border: none; border-radius: 50%;
+      background: #7c3aed; color: white; font-size: 18px; cursor: pointer;
+    }
+
+    /* Empty State */
+    .empty-chat {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; color: #9ca3af; text-align: center;
+    }
+
+    /* Modals */
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: white; padding: 30px; border-radius: 20px;
+      width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px;
+    }
+    .modal-header h2 { color: #7c3aed; }
+    .close-btn {
+      background: none; border: none; font-size: 24px; cursor: pointer;
+      color: #6b7280;
+    }
+
+    /* Gifts Grid */
+    .gifts-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px; margin-top: 15px;
+    }
+    .gift-item {
+      background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 12px;
+      padding: 10px; text-align: center; cursor: pointer; transition: all 0.2s;
+    }
+    .gift-item:hover {
+      border-color: #7c3aed; transform: scale(1.05);
+    }
+    .gift-item .gift-emoji { font-size: 32px; margin-bottom: 5px; }
+    .gift-item .gift-name { font-size: 12px; font-weight: 600; }
+    .gift-item .gift-price { font-size: 11px; color: #f59e0b; font-weight: bold; }
+
+    /* Clicker */
+    .clicker-area {
+      text-align: center; padding: 30px;
+    }
+    .click-btn {
+      width: 120px; height: 120px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, #f59e0b, #f97316);
+      color: white; font-size: 48px; cursor: pointer;
+      box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+      transition: transform 0.1s;
+    }
+    .click-btn:active { transform: scale(0.95); }
+    .click-info { margin-top: 20px; font-size: 18px; color: #6b7280; }
+    .click-coins { font-size: 32px; color: #f59e0b; font-weight: bold; margin-top: 10px; }
+
+    /* Profile */
+    .profile-header {
+      text-align: center; padding: 20px; background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: white; border-radius: 15px; margin-bottom: 20px;
+    }
+    .profile-avatar {
+      width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; font-weight: bold; margin: 0 auto 10px;
+      border: 3px solid white;
+    }
+    .profile-avatar img {
+      width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+    }
+    .profile-name { font-size: 20px; font-weight: bold; }
+    .profile-coins { margin-top: 10px; font-size: 16px; }
+    .profile-gifts {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 8px; margin-top: 15px;
+    }
+    .profile-gift {
+      background: #f9fafb; border-radius: 8px; padding: 8px;
+      text-align: center; font-size: 24px;
+    }
+
+    /* Admin Panel */
+    .admin-panel {
+      background: #fef2f2; border: 2px solid #ef4444; border-radius: 12px;
+      padding: 15px; margin-top: 15px;
+    }
+    .admin-panel h3 { color: #ef4444; margin-bottom: 10px; }
+    .admin-btn {
+      background: #ef4444; color: white; border: none; padding: 8px 16px;
+      border-radius: 8px; cursor: pointer; font-size: 13px; margin: 5px;
+    }
+    .admin-btn:hover { background: #dc2626; }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; position: absolute; z-index: 20; height: 100%; }
+      .sidebar.hidden { transform: translateX(-100%); }
+      .chat-area { width: 100%; }
+      .back-btn {
+        display: flex !important; margin-right: 10px; width: 30px; height: 30px;
+        border: none; background: #f3f4f6; border-radius: 50%; cursor: pointer;
+        align-items: center; justify-content: center; font-size: 16px;
+      }
+      .message { max-width: 85%; }
+      .input-area {
+        position: fixed; bottom: 0; left: 0; right: 0; padding: 10px;
+        background: white; border-top: 1px solid #e5e7eb; z-index: 10;
+      }
+      .messages { padding-bottom: 100px; }
+      .input-actions button { width: 36px; height: 36px; font-size: 16px; }
+      .send-btn { width: 36px; height: 36px; font-size: 16px; }
+      .text-input-wrapper textarea { padding: 8px 12px; font-size: 14px; }
+    }
+    .back-btn { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <h1>💜 Purple Messenger</h1>
+      <input type="text" id="usernameInput" placeholder="Логин..." maxlength="20" autofocus>
+      <input type="password" id="passwordInput" placeholder="Пароль..." maxlength="30">
+      <button onclick="login()">Войти ✨</button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="app" id="app">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div>
+          <h3>💬 Чаты</h3>
+          <small id="myUsernameDisplay"></small>
+        </div>
+        <div class="coins-display">💰 <span id="myCoins">0</span></div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('conversations')">📜 Чаты</button>
+        <button class="tab-btn" onclick="switchTab('online')">🟢 Онлайн</button>
+        <button class="tab-btn" onclick="switchTab('all')">👥 Все</button>
+      </div>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Поиск..." oninput="renderConversations()">
+      </div>
+      <div class="user-list" id="userList"></div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="chat-area" id="chatArea">
+      <div class="empty-chat" id="emptyChat">
+        <h2>💜 Purple Messenger</h2>
+        <p>Выберите чат или откройте меню</p>
+      </div>
+
+      <div class="chat-header" id="chatHeader" style="display:none;">
+        <button class="back-btn" onclick="showSidebar()">←</button>
+        <div class="user-avatar" id="chatAvatar" onclick="openProfile(currentUser)"></div>
+        <div>
+          <div class="user-name" id="chatName"></div>
+          <small id="chatStatus" style="color: #6b7280;"></small>
+        </div>
+      </div>
+
+      <div class="messages" id="messages" style="display:none;"></div>
+
+      <div class="input-area" id="inputArea" style="display:none;">
+        <div class="input-actions">
+          <button onclick="openGifts()">🎁</button>
+          <button onclick="openClicker()">💰</button>
+          <button onclick="openProfile(currentUser)">👤</button>
+        </div>
+        <div class="text-input-wrapper">
+          <textarea id="messageInput" placeholder="Сообщение..." rows="1" onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
+        </div>
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gifts Modal -->
+  <div class="modal" id="giftsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🎁 Подарки</h2>
+        <button class="close-btn" onclick="closeModal('giftsModal')">×</button>
+      </div>
+      <p>Выберите подарок для <strong id="giftToUser"></strong></p>
+      <div class="gifts-grid" id="giftsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Clicker Modal -->
+  <div class="modal" id="clickerModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>💰 Кликер</h2>
+        <button class="close-btn" onclick="closeModal('clickerModal')">×</button>
+      </div>
+      <div class="clicker-area">
+        <button class="click-btn" onclick="doClick()">💎</button>
+        <div class="click-info">Нажимай чтобы заработать!</div>
+        <div class="click-coins">💰 <span id="clickerCoins">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="modal" id="profileModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>👤 Профиль</h2>
+        <button class="close-btn" onclick="closeModal('profileModal')">×</button>
+      </div>
+      <div id="profileContent"></div>
+    </div>
+  </div>
+
+  <script>
+    let username = '';
+    let password = '';
+    let ws = null;
+    let currentUser = null;
+    let messages = [];
+    let conversations = [];
+    let connectedUsers = [];
+    let allUsers = [];
+    let currentTab = 'conversations';
+    let myData = { coins: 0, isAdmin: false, avatar: '' };
+    let gifts = [];
+
+    // Connect
+    function connect() {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${location.host}?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
+      
+      ws.onopen = () => console.log('Connected');
+      ws.onmessage = (event) => handleMessage(JSON.parse(event.data));
+      ws.onclose = () => setTimeout(connect, 3000);
+    }
+
+    function handleMessage(data) {
+      switch(data.type) {
+        case 'online_users':
+          connectedUsers = data.users;
+          myData = data.myData || myData;
+          updateCoins();
+          renderConversations();
+          break;
+        case 'all_users':
+          allUsers = data.users;
+          renderConversations();
+          break;
+        case 'conversations':
+          conversations = data.conversations;
+          renderConversations();
+          break;
+        case 'chat_history':
+          if (data.user === currentUser) {
+            messages = data.messages;
+            renderMessages();
+          }
+          break;
+        case 'chat': case 'photo': case 'voice': case 'circle':
+          messages.push(data);
+          renderMessages();
+          updateConversation(data);
+          break;
+        case 'gift_received':
+          if (data.to === username) {
+            showMessage(`<div class="gift-message">${data.giftName}</div>`);
+            playGiftSound();
+          }
+          break;
+        case 'coins_update':
+          myData.coins = data.coins;
+          updateCoins();
+          break;
+        case 'avatar_update':
+          myData.avatar = data.avatar;
+          updateAvatar();
+          break;
+        case 'profile_data':
+          renderProfile(data.user, data.gifts);
+          break;
+        case 'online_update':
+          connectedUsers = data.users;
+          renderConversations();
+          break;
+        case 'error':
+          alert(data.message);
+          break;
+        case 'you_are_admin':
+          myData.isAdmin = true;
+          alert('🎉 Вы теперь администратор!');
+          renderConversations();
+          break;
+      }
+    }
+
+    function updateConversation(msg) {
+      const idx = conversations.findIndex(c =>
+        (c.from === username && c.to === msg.from) ||
+        (c.to === username && c.from === msg.from)
+      );
+      if (idx >= 0) conversations.splice(idx, 1);
+      conversations.unshift(msg);
+      renderConversations();
+    }
+
+    // Login
+    function login() {
+      const user = document.getElementById('usernameInput').value.trim();
+      const pass = document.getElementById('passwordInput').value.trim();
+      if (!user || !pass) { alert('Введите логин и пароль!'); return; }
+      
+      username = user;
+      password = pass;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('app').classList.add('active');
+      document.getElementById('myUsernameDisplay').textContent = user;
+      
+      connect();
+    }
+
+    document.getElementById('usernameInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('passwordInput').focus();
+    });
+    document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') login();
+    });
+
+    // Tabs
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      renderConversations();
+    }
+
+    // Render Conversations
+    function renderConversations() {
+      const list = document.getElementById('userList');
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      let items = [];
+
+      if (currentTab === 'conversations') {
+        items = conversations.filter(c => {
+          const u = c.from === username ? c.to : c.from;
+          return u.toLowerCase().includes(query);
+        });
+      } else if (currentTab === 'online') {
+        items = connectedUsers.filter(u => u !== username && u.toLowerCase().includes(query));
+      } else {
+        items = allUsers.filter(u => u !== username && u.toLowerCase().includes(query));
+      }
+
+      list.innerHTML = items.map(item => {
+        const isOnline = connectedUsers.includes(item);
+        const lastMsg = getLastMsgText(item);
+        const time = getLastTime(item);
+        const initial = item.charAt(0).toUpperCase();
+        const isAdmin = item.toLowerCase() === 'vortex';
+        
+        return `
+          <div class="user-item ${item === currentUser ? 'active' : ''}" onclick="selectUser('${item}')">
+            <div class="user-avatar" onclick="event.stopPropagation(); openProfile('${item}')">${initial}</div>
+            <div class="user-info" onclick="selectUser('${item}')">
+              <div style="display:flex; justify-content:space-between;">
+                <div class="user-name">
+                  ${item}
+                  ${isAdmin ? '<span class="admin-badge">✓</span>' : ''}
+                  <span class="badge ${isOnline ? 'online' : 'offline'}"></span>
+                </div>
+                <div class="user-last-msg">${time}</div>
+              </div>
+              <div class="user-last-msg">${lastMsg || 'Начните общение'}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getLastMsgText(user) {
+      const userMsgs = conversations.filter(c =>
+        (c.from === user && c.to === username) ||
+        (c.from === username && c.to === user)
+      );
+      const last = userMsgs[userMsgs.length - 1];
+      if (!last) return '';
+      if (last.type === 'chat') return last.text;
+      if (last.type === 'photo') return '📷 Фото';
+      if (last.type === 'voice') return '🎤 Голосовое';
+      return '';
+    }
+
+    function getLastTime(user) {
+      const userMsgs = conversations.filter(c =>
+        (c.from === user && c.to === username) ||
+        (c.from === username && c.to === user)
+      );
+      const last = userMsgs[userMsgs.length - 1];
+      return last && last.timestamp ? new Date(last.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    }
+
+    // Select User
+    function selectUser(user) {
+      currentUser = user;
+      document.getElementById('emptyChat').style.display = 'none';
+      document.getElementById('chatHeader').style.display = 'flex';
+      document.getElementById('messages').style.display = 'flex';
+      document.getElementById('inputArea').style.display = 'flex';
+      document.getElementById('chatAvatar').textContent = user.charAt(0).toUpperCase();
+      document.getElementById('chatName').textContent = user;
+      document.getElementById('sidebar').classList.add('hidden');
+      
+      messages = [];
+      ws.send(JSON.stringify({ type: 'get_chat', to: user }));
+    }
+
+    function showSidebar() {
+      document.getElementById('sidebar').classList.remove('hidden');
+      currentUser = null;
+    }
+
+    // Messages
+    function renderMessages() {
+      const container = document.getElementById('messages');
+      if (!currentUser) return;
+      
+      const chatMsgs = messages.filter(m =>
+        (m.from === currentUser && m.to === username) ||
+        (m.from === username && m.to === currentUser)
+      );
+
+      container.innerHTML = chatMsgs.map(m => {
+        const isSent = m.from === username;
+        const time = new Date(m.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+        let content = '';
+        
+        if (m.type === 'chat') content = `<div>${escapeHtml(m.text)}</div>`;
+        else if (m.type === 'photo') content = `<img src="${m.url}">`;
+        else if (m.type === 'voice') content = `<audio controls src="${m.url}"></audio>`;
+        else if (m.type === 'gift') content = `<div class="gift-message">${m.giftName}</div>`;
+        
+        return `
+          <div class="message ${isSent ? 'sent' : 'received'}">
+            ${!isSent ? `<div class="msg-sender">${m.from}</div>` : ''}
+            ${content}
+            <div class="msg-time">${time}</div>
+          </div>
+        `;
+      }).join('');
+      
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function showMessage(html) {
+      const container = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      if (!text || !currentUser) return;
+      
+      ws.send(JSON.stringify({
+        type: 'chat', from: username, to: currentUser, text: text
+      }));
+      input.value = '';
+      input.style.height = 'auto';
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Coins
+    function updateCoins() {
+      document.getElementById('myCoins').textContent = myData.coins;
+    }
+
+    // Gifts
+    function openGifts() {
+      if (!currentUser) { alert('Выберите пользователя!'); return; }
+      document.getElementById('giftToUser').textContent = currentUser;
+      renderGifts();
+      document.getElementById('giftsModal').classList.add('active');
+    }
+
+    function renderGifts() {
+      const grid = document.getElementById('giftsGrid');
+      grid.innerHTML = GIFTS.map(gift => `
+        <div class="gift-item" onclick="sendGift('${gift.type}', '${gift.name}', ${gift.price})">
+          <div class="gift-emoji">${gift.name.split(' ')[0]}</div>
+          <div class="gift-name">${gift.name.split(' ')[1] || gift.name}</div>
+          <div class="gift-price">💰 ${gift.price}</div>
+        </div>
+      `).join('');
+    }
+
+    function sendGift(type, name, price) {
+      if (myData.coins < price && !myData.isAdmin) {
+        alert('Недостаточно монет!');
+        return;
+      }
+      
+      ws.send(JSON.stringify({
+        type: 'send_gift',
+        from: username,
+        to: currentUser,
+        giftType: type,
+        giftName: name,
+        price: price
+      }));
+      
+      closeModal('giftsModal');
+    }
+
+    function playGiftSound() {
+      // Простой звук через Web Audio API
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.5);
+      } catch(e) {}
+    }
+
+    // Clicker
+    function openClicker() {
+      document.getElementById('clickerCoins').textContent = myData.coins;
+      document.getElementById('clickerModal').classList.add('active');
+    }
+
+    function doClick() {
+      ws.send(JSON.stringify({
+        type: 'clicker',
+        amount: 1
+      }));
+    }
+
+    // Profile
+    function openProfile(user) {
+      user = user || currentUser;
+      if (!user) return;
+      
+      document.getElementById('profileModal').classList.add('active');
+      ws.send(JSON.stringify({
+        type: 'get_profile',
+        username: user
+      }));
+    }
+
+    function renderProfile(userData, userGifts) {
+      const content = document.getElementById('profileContent');
+      const isAdmin = userData.isAdmin || userData.username.toLowerCase() === 'vortex';
+      const initial = userData.username.charAt(0).toUpperCase();
+      
+      let giftsHtml = '';
+      if (userGifts && userGifts.length > 0) {
+        giftsHtml = userGifts.map(g => `
+          <div class="profile-gift" title="${g.giftName} от ${g.from}">
+            ${g.giftName.split(' ')[0]}
+          </div>
+        `).join('');
+      } else {
+        giftsHtml = '<p style="color: #9ca3af; text-align: center;">Нет подарков</p>';
+      }
+      
+      let adminHtml = '';
+      if (isAdmin) {
+        adminHtml = `
+          <div class="admin-panel">
+            <h3>👑 Администратор</h3>
+            <p>Выдайте админку другому пользователю:</p>
+            <input type="text" id="adminUsername" placeholder="Логин пользователя" style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <button class="admin-btn" onclick="giveAdmin()">Выдать админку</button>
+          </div>
+        `;
+      }
+      
+      content.innerHTML = `
+        <div class="profile-header">
+          <div class="profile-avatar">${initial}</div>
+          <div class="profile-name">${userData.username} ${isAdmin ? '<span class="admin-badge">✓</span>' : ''}</div>
+          <div class="profile-coins">💰 ${userData.coins} монет</div>
+          ${isAdmin ? '<div style="margin-top: 10px; font-size: 14px;">👑 Администратор</div>' : ''}
+        </div>
+        <h3 style="margin-bottom: 10px;">🎁 Подарки (${userGifts ? userGifts.length : 0})</h3>
+        <div class="profile-gifts">${giftsHtml}</div>
+        ${adminHtml}
+      `;
+    }
+
+    function giveAdmin() {
+      const target = document.getElementById('adminUsername').value.trim();
+      if (!target) { alert('Введите логин!'); return; }
+      
+      ws.send(JSON.stringify({
+        type: 'give_admin',
+        targetUsername: target
+      }));
+    }
+
+    // Modals
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // Close modals on outside click
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('active');
+      }
+    }
+  </script>
+</body>
+</html>
