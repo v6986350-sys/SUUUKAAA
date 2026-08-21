@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purple Messenger</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; height: 100vh; overflow: hidden; }
+    
+    /* Login */
+    .login-screen {
+      display: flex; align-items: center; justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      background-size: 200% 200%;
+      animation: gradientShift 8s ease infinite;
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .login-box {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 50px 40px;
+      border-radius: 24px;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: fadeInUp 0.6s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .login-box h1 {
+      color: #fff; text-align: center; margin-bottom: 10px;
+      font-size: 32px; font-weight: 700;
+      background: linear-gradient(135deg, #667eea, #f093fb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .login-box p { color: #94a3b8; text-align: center; margin-bottom: 30px; }
+    .login-box input {
+      width: 100%; padding: 16px 20px; margin-bottom: 16px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 2px solid #334155; border-radius: 14px;
+      color: #fff; font-size: 16px; outline: none; transition: all 0.3s;
+    }
+    .login-box input:focus { border-color: #667eea; box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2); }
+    .login-box button {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; border: none; border-radius: 14px;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    .login-box button:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5); }
+
+    /* App */
+    .app { display: none; height: 100vh; }
+    .app.active { display: flex; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Sidebar */
+    .sidebar {
+      width: 400px; background: #1e293b; display: flex; flex-direction: column;
+      border-right: 1px solid rgba(51, 65, 85, 0.5);
+    }
+    .sidebar-header {
+      padding: 16px 20px; background: rgba(15, 23, 42, 0.95);
+      display: flex; align-items: center; gap: 14px; height: 72px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+    .my-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: bold; font-size: 20px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .my-info { flex: 1; }
+    .my-username { color: #fff; font-weight: 600; font-size: 16px; }
+    .my-stats { display: flex; gap: 12px; margin-top: 4px; }
+    .stat-item {
+      display: flex; align-items: center; gap: 4px;
+      color: #94a3b8; font-size: 12px;
+    }
+    .stat-icon { font-size: 14px; }
+    
+    .search-box { padding: 12px 16px; background: rgba(15, 23, 42, 0.5); }
+    .search-box input {
+      width: 100%; padding: 12px 18px;
+      background: #0f172a; border: 2px solid #334155;
+      border-radius: 14px; color: #fff; font-size: 14px;
+      outline: none; transition: all 0.3s;
+    }
+    .search-box input:focus { border-color: #667eea; }
+    .search-box input::placeholder { color: #64748b; }
+    
+    .tabs {
+      display: flex; padding: 10px 16px; background: #0f172a;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      overflow-x: auto;
+    }
+    .tab-btn {
+      flex: 1; padding: 10px; border: none; background: transparent;
+      color: #64748b; font-size: 12px; font-weight: 600;
+      cursor: pointer; border-radius: 10px; transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .user-list { flex: 1; overflow-y: auto; }
+    .user-list::-webkit-scrollbar { width: 6px; }
+    .user-list::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    
+    .user-item {
+      display: flex; align-items: center; padding: 14px 20px;
+      cursor: pointer; transition: all 0.2s;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.2);
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .user-item:hover { background: rgba(51, 65, 85, 0.5); }
+    .user-item.active { background: linear-gradient(90deg, rgba(102, 126, 234, 0.2), transparent); }
+    
+    .user-avatar {
+      width: 50px; height: 50px; border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: bold; font-size: 22px;
+      margin-right: 14px; flex-shrink: 0;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      position: relative;
+    }
+    .user-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .online-dot {
+      position: absolute; bottom: 2px; right: 2px;
+      width: 14px; height: 14px; background: #22c55e;
+      border-radius: 50%; border: 3px solid #1e293b;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    .user-info { flex: 1; min-width: 0; }
+    .user-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .user-name-row { display: flex; align-items: center; gap: 8px; }
+    .user-name {
+      font-weight: 600; color: #fff; font-size: 15px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .admin-badge { color: #ef4444; font-size: 16px; flex-shrink: 0; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+    .user-time { color: #64748b; font-size: 12px; flex-shrink: 0; }
+    .user-last-msg { color: #94a3b8; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Chat Area */
+    .chat-area {
+      flex: 1; display: flex; flex-direction: column;
+      background: #0a0a0a; position: relative;
+    }
+    .chat-bg {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231e293b' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.5;
+    }
+    
+    .chat-header {
+      padding: 16px 24px; background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(10px);
+      display: flex; align-items: center; gap: 14px;
+      height: 72px; border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      position: relative; z-index: 1;
+    }
+    .chat-header .user-avatar { width: 46px; height: 46px; font-size: 20px; }
+    .chat-header-info { flex: 1; }
+    .chat-header-name { color: #fff; font-weight: 600; font-size: 16px; }
+    .chat-header-status { color: #64748b; font-size: 13px; margin-top: 2px; }
+    .chat-header-status.online { color: #22c55e; }
+    
+    .header-actions { display: flex; gap: 10px; }
+    .header-btn {
+      width: 42px; height: 42px; border: none; border-radius: 12px;
+      background: rgba(51, 65, 85, 0.5); color: #94a3b8;
+      font-size: 20px; cursor: pointer; transition: all 0.3s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .header-btn:hover {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Messages */
+    .messages {
+      flex: 1; overflow-y: auto; padding: 24px;
+      display: flex; flex-direction: column; gap: 12px;
+      position: relative; z-index: 1;
+    }
+    .messages::-webkit-scrollbar { width: 8px; }
+    .messages::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    
+    .message {
+      max-width: 70%; padding: 14px 18px; position: relative;
+      word-wrap: break-word; animation: msgIn 0.3s ease;
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(15px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    .message.sent {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; border-radius: 20px 20px 6px 20px;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+    .message.received {
+      align-self: flex-start;
+      background: #1e293b; border-radius: 20px 20px 20px 6px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    .msg-content { font-size: 15px; line-height: 1.5; margin-bottom: 6px; }
+    .msg-sender { font-size: 13px; color: #667eea; font-weight: 600; margin-bottom: 6px; }
+    .message.sent .msg-sender { color: rgba(255,255,255,0.8); text-align: right; }
+    
+    .msg-footer {
+      display: flex; justify-content: flex-end; align-items: center;
+      gap: 6px; margin-top: 6px;
+    }
+    .msg-time { font-size: 11px; opacity: 0.7; }
+    .msg-check { font-size: 14px; }
+    
+    .message img {
+      max-width: 100%; border-radius: 14px; margin-top: 8px;
+      cursor: pointer; transition: transform 0.2s;
+    }
+    .message img:hover { transform: scale(1.02); }
+    .message audio { width: 260px; margin-top: 8px; }
+    .message video { max-width: 100%; border-radius: 14px; margin-top: 8px; }
+    
+    .gift-message {
+      font-size: 56px; text-align: center; padding: 24px;
+      animation: giftPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    @keyframes giftPop {
+      0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+      50% { transform: scale(1.3) rotate(5deg); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    /* Empty State */
+    .empty-chat {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; color: #64748b; text-align: center;
+      position: relative; z-index: 1;
+    }
+    .empty-chat .icon { font-size: 80px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .empty-chat h2 { color: #94a3b8; margin-bottom: 10px; font-size: 24px; }
+    .empty-chat p { color: #64748b; font-size: 14px; }
+
+    /* Input Area */
+    .input-area {
+      padding: 16px 24px; background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(10px);
+      display: flex; align-items: flex-end; gap: 14px;
+      border-top: 1px solid rgba(51, 65, 85, 0.5);
+      position: relative; z-index: 1;
+    }
+    
+    .input-actions { display: flex; gap: 10px; }
+    .input-btn {
+      width: 46px; height: 46px; border: none; border-radius: 14px;
+      background: rgba(51, 65, 85, 0.5); color: #94a3b8;
+      font-size: 22px; cursor: pointer; transition: all 0.3s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .input-btn:hover {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .text-input-wrapper { flex: 1; }
+    .text-input-wrapper textarea {
+      width: 100%; padding: 14px 20px;
+      background: #0f172a; border: 2px solid transparent;
+      border-radius: 16px; color: #fff; font-size: 15px;
+      resize: none; outline: none; max-height: 120px;
+      font-family: inherit; transition: all 0.3s;
+    }
+    .text-input-wrapper textarea:focus {
+      border-color: #667eea; box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+    }
+    .text-input-wrapper textarea::placeholder { color: #64748b; }
+    
+    .send-btn {
+      width: 46px; height: 46px; border: none; border-radius: 14px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; font-size: 22px; cursor: pointer;
+      transition: all 0.3s;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .send-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5); }
+    .send-btn:active { transform: scale(0.95); }
+
+    /* Modals */
+    .modal {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      padding: 0; border-radius: 24px;
+      width: 90%; max-width: 540px;
+      max-height: 85vh; overflow: hidden;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: modalIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.9) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-header {
+      padding: 24px; background: rgba(15, 23, 42, 0.8);
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+    .modal-header h2 { color: #fff; font-size: 22px; }
+    .close-btn {
+      background: none; border: none; font-size: 32px;
+      cursor: pointer; color: #94a3b8; transition: all 0.3s;
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .close-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    .modal-body { padding: 24px; overflow-y: auto; max-height: calc(85vh - 100px); }
+
+    /* Gifts Grid */
+    .gifts-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 14px;
+    }
+    .gift-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid #334155; border-radius: 16px;
+      padding: 18px 10px; text-align: center; cursor: pointer;
+      transition: all 0.3s;
+    }
+    .gift-item:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+    .gift-item.common:hover { border-color: #94a3b8; }
+    .gift-item.rare:hover { border-color: #3b82f6; }
+    .gift-item.epic:hover { border-color: #a855f7; }
+    .gift-item.legendary:hover { border-color: #f59e0b; }
+    .gift-item .gift-emoji { font-size: 40px; margin-bottom: 10px; }
+    .gift-item .gift-name { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+    .gift-item .gift-price {
+      font-size: 13px; font-weight: bold;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .gift-item.common .gift-price { color: #94a3b8; }
+    .gift-item.rare .gift-price { color: #3b82f6; }
+    .gift-item.epic .gift-price { color: #a855f7; }
+    .gift-item.legendary .gift-price { color: #f59e0b; }
+
+    /* Clicker */
+    .clicker-area { text-align: center; padding: 30px 20px; }
+    .click-btn {
+      width: 150px; height: 150px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, #f59e0b, #f97316);
+      color: white; font-size: 64px; cursor: pointer;
+      box-shadow: 0 10px 35px rgba(245, 158, 11, 0.5);
+      transition: all 0.15s; position: relative;
+    }
+    .click-btn:hover { transform: scale(1.05); }
+    .click-btn:active { transform: scale(0.95); }
+    .click-btn::after {
+      content: ''; position: absolute; top: -10px; left: -10px;
+      right: -10px; bottom: -10px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), transparent);
+      border-radius: 50%; z-index: -1;
+      animation: glow 2s ease-in-out infinite;
+    }
+    @keyframes glow {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    .click-info { margin-top: 28px; font-size: 18px; color: #94a3b8; }
+    .click-coins {
+      font-size: 40px; color: #f59e0b; font-weight: bold;
+      margin-top: 16px; text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+    }
+    .click-multiplier { margin-top: 12px; font-size: 14px; color: #667eea; }
+
+    /* Profile */
+    .profile-header {
+      text-align: center; padding: 32px 24px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; border-radius: 20px; margin-bottom: 24px;
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+    }
+    .profile-avatar {
+      width: 96px; height: 96px; border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 44px; font-weight: bold; margin: 0 auto 14px;
+      border: 4px solid white; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .profile-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .profile-name { font-size: 24px; font-weight: bold; }
+    .profile-coins {
+      margin-top: 14px; font-size: 20px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .profile-level {
+      margin-top: 10px; font-size: 16px;
+      background: rgba(255,255,255,0.2);
+      padding: 6px 16px; border-radius: 20px; display: inline-block;
+    }
+    .profile-gifts {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+      gap: 12px; margin-top: 18px;
+    }
+    .profile-gift {
+      background: rgba(15, 23, 42, 0.6); border-radius: 12px;
+      padding: 14px 10px; text-align: center; font-size: 30px;
+      border: 2px solid #334155; transition: all 0.3s;
+    }
+    .profile-gift:hover { transform: scale(1.1); }
+    .profile-gift.common { border-color: #94a3b8; }
+    .profile-gift.rare { border-color: #3b82f6; }
+    .profile-gift.epic { border-color: #a855f7; }
+    .profile-gift.legendary { border-color: #f59e0b; }
+
+    /* Admin Panel */
+    .admin-panel {
+      background: rgba(239, 68, 68, 0.1);
+      border: 2px solid #ef4444; border-radius: 16px;
+      padding: 20px; margin-top: 20px;
+    }
+    .admin-panel h3 { color: #ef4444; margin-bottom: 14px; font-size: 18px; }
+    .admin-input {
+      width: 100%; padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid #334155; border-radius: 12px;
+      color: #fff; font-size: 14px; outline: none;
+      margin-bottom: 12px; transition: all 0.3s;
+    }
+    .admin-input:focus { border-color: #ef4444; }
+    .admin-btn {
+      background: #ef4444; color: white; border: none;
+      padding: 12px 24px; border-radius: 12px;
+      cursor: pointer; font-size: 14px; font-weight: 600;
+      transition: all 0.3s;
+    }
+    .admin-btn:hover { background: #dc2626; transform: translateY(-2px); }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed; top: 20px; right: 20px;
+      z-index: 2000; display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: #fff; padding: 16px 24px; border-radius: 14px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      border-left: 4px solid #667eea;
+      animation: toastIn 0.4s ease, toastOut 0.4s ease 2.6s forwards;
+      max-width: 320px;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(100px); }
+    }
+    .toast.success { border-left-color: #22c55e; }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.info { border-left-color: #3b82f6; }
+
+    /* Particles */
+    .particle {
+      position: fixed; pointer-events: none; z-index: 3000;
+      font-size: 24px; animation: particleFly 1s ease-out forwards;
+    }
+    @keyframes particleFly {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-100px) scale(0.5); }
+    }
+
+    /* Achievement Unlocked */
+    .achievement-unlocked {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; padding: 30px 50px;
+      border-radius: 20px; text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      z-index: 3000;
+      animation: achievementPop 3s ease forwards;
+    }
+    @keyframes achievementPop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      10% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      20% { transform: translate(-50%, -50%) scale(1); }
+      80% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+    }
+    .achievement-unlocked .icon { font-size: 48px; margin-bottom: 10px; }
+    .achievement-unlocked .title { font-size: 20px; font-weight: bold; }
+    .achievement-unlocked .desc { font-size: 14px; opacity: 0.9; margin-top: 5px; }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; position: absolute; z-index: 20; height: 100%; }
+      .sidebar.hidden { transform: translateX(-100%); }
+      .chat-area { width: 100%; }
+      .back-btn {
+        display: flex !important; width: 42px; height: 42px;
+        border: none; background: transparent; color: #94a3b8;
+        font-size: 22px; cursor: pointer; align-items: center;
+        justify-content: center;
+      }
+      .message { max-width: 85%; }
+      .input-area { padding: 12px 16px; }
+    }
+    .back-btn { display: none; }
+
+    /* Shop Items */
+    .shop-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 14px;
+    }
+    .shop-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid #334155; border-radius: 16px;
+      padding: 20px 14px; text-align: center;
+      cursor: pointer; transition: all 0.3s;
+    }
+    .shop-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    .shop-item .icon { font-size: 36px; margin-bottom: 10px; }
+    .shop-item .name { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+    .shop-item .desc { font-size: 12px; color: #94a3b8; margin-bottom: 10px; }
+    .shop-item .price {
+      font-size: 14px; font-weight: bold; color: #f59e0b;
+    }
+    .shop-item button {
+      margin-top: 10px; padding: 8px 16px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; border: none; border-radius: 10px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 14px;
+    }
+    .stat-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid #334155; border-radius: 16px;
+      padding: 20px; text-align: center;
+    }
+    .stat-card .icon { font-size: 32px; margin-bottom: 8px; }
+    .stat-card .value { font-size: 24px; font-weight: bold; color: #fff; }
+    .stat-card .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+    /* Achievements */
+    .achievements-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px;
+    }
+    .achievement-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid #334155; border-radius: 16px;
+      padding: 16px; text-align: center;
+      transition: all 0.3s;
+    }
+    .achievement-item.unlocked {
+      border-color: #667eea;
+      box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+    }
+    .achievement-item.locked { opacity: 0.5; filter: grayscale(1); }
+    .achievement-item .icon { font-size: 32px; margin-bottom: 8px; }
+    .achievement-item .name { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+    .achievement-item .desc { font-size: 11px; color: #94a3b8; }
+
+    /* Leaderboard */
+    .leaderboard-list {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .leaderboard-item {
+      display: flex; align-items: center; padding: 14px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid #334155; border-radius: 14px;
+      transition: all 0.3s;
+    }
+    .leaderboard-item:nth-child(1) { border-color: #f59e0b; }
+    .leaderboard-item:nth-child(2) { border-color: #94a3b8; }
+    .leaderboard-item:nth-child(3) { border-color: #cd7f32; }
+    .leaderboard-rank {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; color: white; margin-right: 12px;
+    }
+    .leaderboard-item:nth-child(1) .leaderboard-rank { background: linear-gradient(135deg, #f59e0b, #f97316); }
+    .leaderboard-item:nth-child(2) .leaderboard-rank { background: linear-gradient(135deg, #94a3b8, #64748b); }
+    .leaderboard-item:nth-child(3) .leaderboard-rank { background: linear-gradient(135deg, #cd7f32, #a0522d); }
+    .leaderboard-name { flex: 1; color: #fff; font-weight: 600; }
+    .leaderboard-coins { color: #f59e0b; font-weight: bold; }
+
+    /* Daily Bonus */
+    .daily-bonus-area {
+      text-align: center; padding: 30px 20px;
+    }
+    .daily-bonus-btn {
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white; border: none; border-radius: 14px;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+      transition: all 0.3s;
+    }
+    .daily-bonus-btn:hover { transform: translateY(-2px); }
+    .daily-bonus-btn:disabled {
+      background: #475569; cursor: not-allowed;
+      box-shadow: none;
+    }
+    .daily-streak {
+      margin-top: 16px; font-size: 18px; color: #94a3b8;
+    }
+    .daily-streak span { color: #22c55e; font-weight: bold; }
+
+    /* Games */
+    .games-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+    }
+    .game-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid #334155; border-radius: 16px;
+      padding: 24px 16px; text-align: center;
+      cursor: pointer; transition: all 0.3s;
+    }
+    .game-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    .game-item .icon { font-size: 40px; margin-bottom: 10px; }
+    .game-item .name { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+    .game-item .desc { font-size: 12px; color: #94a3b8; margin-bottom: 10px; }
+    .game-item .bet { font-size: 14px; color: #f59e0b; font-weight: bold; }
+
+    /* Friends */
+    .friends-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px;
+    }
+    .friend-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid #334155; border-radius: 14px;
+      padding: 16px; text-align: center;
+      transition: all 0.3s;
+    }
+    .friend-item:hover { transform: scale(1.05); }
+    .friend-item .avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: bold; font-size: 20px;
+      margin: 0 auto 8px;
+    }
+    .friend-item .name { font-size: 14px; font-weight: 600; color: #fff; }
+    .friend-item .status { font-size: 12px; color: #22c55e; }
+
+    /* History */
+    .history-list {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .history-item {
+      display: flex; align-items: center; padding: 14px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid #334155; border-radius: 14px;
+    }
+    .history-item .icon { font-size: 24px; margin-right: 12px; }
+    .history-item .info { flex: 1; }
+    .history-item .title { color: #fff; font-weight: 600; font-size: 14px; }
+    .history-item .time { color: #64748b; font-size: 12px; margin-top: 2px; }
+    .history-item .amount { font-weight: bold; font-size: 14px; }
+    .history-item .amount.positive { color: #22c55e; }
+    .history-item .amount.negative { color: #ef4444; }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <h1>💜 Messenger</h1>
+      <p>Добро пожаловать!</p>
+      <input type="text" id="usernameInput" placeholder="Логин..." maxlength="20" autofocus>
+      <input type="password" id="passwordInput" placeholder="Пароль..." maxlength="30">
+      <button onclick="login()">Войти ✨</button>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div class="app" id="app">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="my-avatar" id="myAvatar">?</div>
+        <div class="my-info">
+          <div class="my-username" id="myUsername"></div>
+          <div class="my-stats">
+            <div class="stat-item"><span class="stat-icon">💰</span> <span id="myCoins">0</span></div>
+            <div class="stat-item"><span class="stat-icon">⭐</span> Ур. <span id="myLevel">1</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Поиск..." oninput="renderChats()">
+      </div>
+      
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('conversations')">💬 Чаты</button>
+        <button class="tab-btn" onclick="switchTab('online')">🟢 Онлайн</button>
+        <button class="tab-btn" onclick="switchTab('all')">👥 Все</button>
+        <button class="tab-btn" onclick="switchTab('clicker')">💰 Кликер</button>
+        <button class="tab-btn" onclick="switchTab('gifts')">🎁 Подарки</button>
+        <button class="tab-btn" onclick="switchTab('profile')">👤 Профиль</button>
+        <button class="tab-btn" onclick="switchTab('shop')">🛒 Магазин</button>
+        <button class="tab-btn" onclick="switchTab('stats')">📊 Статистика</button>
+        <button class="tab-btn" onclick="switchTab('achievements')">🏆 Достижения</button>
+        <button class="tab-btn" onclick="switchTab('games')">🎮 Игры</button>
+        <button class="tab-btn" onclick="switchTab('daily')">🎁 Бонус</button>
+        <button class="tab-btn" onclick="switchTab('friends')">👥 Друзья</button>
+        <button class="tab-btn" onclick="switchTab('leaderboard')">🥇 Топ</button>
+        <button class="tab-btn" onclick="switchTab('history')">📜 История</button>
+      </div>
+      
+      <div class="user-list" id="userList"></div>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-area" id="chatArea">
+      <div class="chat-bg"></div>
+      
+      <div class="empty-chat" id="emptyChat">
+        <div class="icon">💬</div>
+        <h2>Purple Messenger</h2>
+        <p>Выберите чат для начала общения</p>
+      </div>
+
+      <div class="chat-header" id="chatHeader" style="display:none;">
+        <button class="back-btn" onclick="showSidebar()">←</button>
+        <div class="user-avatar" id="chatAvatar" onclick="openProfile(currentUser)"></div>
+        <div class="chat-header-info">
+          <div class="chat-header-name" id="chatName"></div>
+          <div class="chat-header-status" id="chatStatus"></div>
+        </div>
+        <div class="header-actions">
+          <button class="header-btn" onclick="openGifts()" title="Подарки">🎁</button>
+          <button class="header-btn" onclick="openClicker()" title="Кликер">💰</button>
+          <button class="header-btn" onclick="openProfile(currentUser)" title="Профиль">👤</button>
+        </div>
+      </div>
+
+      <div class="messages" id="messages" style="display:none;"></div>
+
+      <div class="input-area" id="inputArea" style="display:none;">
+        <div class="input-actions">
+          <button class="input-btn" onclick="openGifts()" title="Подарки">🎁</button>
+          <button class="input-btn" onclick="openClicker()" title="Кликер">💰</button>
+        </div>
+        <div class="text-input-wrapper">
+          <textarea id="messageInput" placeholder="Сообщение..." rows="1" onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
+        </div>
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gifts Modal -->
+  <div class="modal" id="giftsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🎁 Подарки</h2>
+        <button class="close-btn" onclick="closeModal('giftsModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: #94a3b8; margin-bottom: 20px;">Отправить для: <strong style="color: #fff;" id="giftToUser"></strong></p>
+        <div class="gifts-grid" id="giftsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clicker Modal -->
+  <div class="modal" id="clickerModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>💰 Кликер</h2>
+        <button class="close-btn" onclick="closeModal('clickerModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="clicker-area">
+          <button class="click-btn" onclick="doClick(event)">💎</button>
+          <div class="click-info">Нажимай чтобы заработать монеты!</div>
+          <div class="click-coins">💰 <span id="clickerCoins">0</span></div>
+          <div class="click-multiplier">Множитель: x<span id="clickMultiplier">1.0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="modal" id="profileModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>👤 Профиль</h2>
+        <button class="close-btn" onclick="closeModal('profileModal')">×</button>
+      </div>
+      <div class="modal-body" id="profileContent"></div>
+    </div>
+  </div>
+
+  <!-- Shop Modal -->
+  <div class="modal" id="shopModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🛒 Магазин</h2>
+        <button class="close-btn" onclick="closeModal('shopModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="shop-grid" id="shopGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Modal -->
+  <div class="modal" id="statsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📊 Статистика</h2>
+        <button class="close-btn" onclick="closeModal('statsModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="stats-grid" id="statsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Achievements Modal -->
+  <div class="modal" id="achievementsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🏆 Достижения</h2>
+        <button class="close-btn" onclick="closeModal('achievementsModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="achievements-grid" id="achievementsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Games Modal -->
+  <div class="modal" id="gamesModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🎮 Мини-игры</h2>
+        <button class="close-btn" onclick="closeModal('gamesModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="games-grid" id="gamesGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Bonus Modal -->
+  <div class="modal" id="dailyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🎁 Ежедневный бонус</h2>
+        <button class="close-btn" onclick="closeModal('dailyModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="daily-bonus-area">
+          <button class="daily-bonus-btn" id="dailyBtn" onclick="claimDaily()">Получить бонус</button>
+          <div class="daily-streak">Серия: <span id="dailyStreak">0</span> дней</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Friends Modal -->
+  <div class="modal" id="friendsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>👥 Друзья</h2>
+        <button class="close-btn" onclick="closeModal('friendsModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="addFriendInput" placeholder="Имя друга..." style="width: 100%; padding: 12px; margin-bottom: 16px; background: #0f172a; border: 2px solid #334155; border-radius: 12px; color: #fff;">
+        <button class="admin-btn" onclick="addFriend()" style="width: 100%; margin-bottom: 20px;">Добавить друга</button>
+        <div class="friends-grid" id="friendsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div class="modal" id="leaderboardModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🥇 Топ пользователей</h2>
+        <button class="close-btn" onclick="closeModal('leaderboardModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="leaderboard-list" id="leaderboardList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div class="modal" id="historyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📜 История</h2>
+        <button class="close-btn" onclick="closeModal('historyModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    let username = '';
+    let password = '';
+    let ws = null;
+    let currentUser = null;
+    let messages = [];
+    let conversations = [];
+    let connectedUsers = [];
+    let allUsers = [];
+    let currentTab = 'conversations';
+    let myData = { coins: 0, isAdmin: false, avatar: '', level: 1, clicks: 0, achievements: [] };
+    let history = [];
+
+    function connect() {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${location.host}?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
+      ws.onopen = () => showToast('Подключено!', 'success');
+      ws.onmessage = (event) => handleMessage(JSON.parse(event.data));
+      ws.onclose = () => setTimeout(connect, 3000);
+    }
+
+    function handleMessage(data) {
+      switch(data.type) {
+        case 'online_users':
+          connectedUsers = data.users;
+          myData = data.myData || myData;
+          updateUI();
+          renderChats();
+          break;
+        case 'all_users':
+          allUsers = data.users;
+          renderChats();
+          break;
+        case 'conversations':
+          conversations = data.conversations;
+          renderChats();
+          break;
+        case 'chat_history':
+          if (data.user === currentUser) {
+            messages = data.messages;
+            renderMessages();
+          }
+          break;
+        case 'chat':
+          messages.push(data);
+          renderMessages();
+          updateConversation(data);
+          break;
+        case 'gift_received':
+          if (data.to === username) {
+            showMessage(`<div class="gift-message">${data.giftName}</div>`);
+            playGiftSound();
+            showToast(`${data.from} отправил вам ${data.giftName}!`, 'success');
+            addHistory('gift', `${data.giftName} от ${data.from}`, data.price, 'negative');
+          }
+          break;
+        case 'coins_update':
+          myData.coins = data.coins;
+          myData.level = data.level || myData.level;
+          myData.clicks = data.clicks || myData.clicks;
+          updateUI();
+          break;
+        case 'level_up':
+          myData.level = data.level;
+          updateUI();
+          showToast(data.message, 'success');
+          break;
+        case 'avatar_update':
+          myData.avatar = data.avatar;
+          updateUI();
+          break;
+        case 'profile_data':
+          renderProfile(data.user, data.gifts);
+          break;
+        case 'online_update':
+          connectedUsers = data.users;
+          renderChats();
+          break;
+        case 'error':
+          showToast(data.message, 'error');
+          break;
+        case 'you_are_admin':
+          myData.isAdmin = true;
+          showToast('🎉 Вы теперь администратор!', 'success');
+          updateUI();
+          break;
+        case 'achievement_unlocked':
+          showToast(`🏆 Достижение: ${data.achievement.name}!`, 'success');
+          showAchievementUnlocked(data.achievement);
+          break;
+        case 'shop_purchased':
+          showToast(`Куплено: ${data.item.name}!`, 'success');
+          myData.coins = data.coins;
+          updateUI();
+          break;
+        case 'game_result':
+          if (data.won) {
+            showToast(`🎉 Вы выиграли ${data.amount} монет!`, 'success');
+            addHistory('game', `Выигрыш в игре`, data.amount, 'positive');
+          } else {
+            showToast(`😢 Вы проиграли`, 'error');
+            addHistory('game', `Проигрыш в игре`, data.amount, 'negative');
+          }
+          break;
+        case 'daily_received':
+          showToast(`🎁 Получено ${data.amount} монет!`, 'success');
+          myData.coins += data.amount;
+          updateUI();
+          addHistory('daily', `Ежедневный бонус`, data.amount, 'positive');
+          break;
+        case 'friends_list':
+          renderFriends(data.friends);
+          break;
+        case 'friend_added':
+          showToast('Запрос отправлен!', 'success');
+          break;
+        case 'friend_accepted':
+          showToast('Друг принят!', 'success');
+          break;
+        case 'stats_data':
+          renderStats(data);
+          break;
+      }
+    }
+
+    function addHistory(type, title, amount, className) {
+      history.unshift({
+        type, title, amount, className,
+        time: new Date().toLocaleString('ru-RU')
+      });
+      if (history.length > 50) history.pop();
+    }
+
+    function updateConversation(msg) {
+      const idx = conversations.findIndex(c =>
+        (c.sender === username && c.recipient === msg.sender) ||
+        (c.recipient === username && c.sender === msg.sender)
+      );
+      if (idx >= 0) conversations.splice(idx, 1);
+      conversations.unshift(msg);
+      renderChats();
+    }
+
+    function login() {
+      const user = document.getElementById('usernameInput').value.trim();
+      const pass = document.getElementById('passwordInput').value.trim();
+      if (!user || !pass) { showToast('Введите логин и пароль!', 'error'); return; }
+      username = user;
+      password = pass;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('app').classList.add('active');
+      document.getElementById('myUsername').textContent = user;
+      connect();
+    }
+
+    document.getElementById('usernameInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('passwordInput').focus();
+    });
+    document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') login();
+    });
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      switch(tab) {
+        case 'conversations':
+        case 'online':
+        case 'all':
+          renderChats();
+          break;
+        case 'clicker':
+          openClicker();
+          break;
+        case 'gifts':
+          if (currentUser) openGifts();
+          else showToast('Выберите пользователя!', 'error');
+          break;
+        case 'profile':
+          openProfile(username);
+          break;
+        case 'shop':
+          renderShop();
+          document.getElementById('shopModal').classList.add('active');
+          break;
+        case 'stats':
+          renderStats();
+          ws.send({ type: 'request_stats' });
+          document.getElementById('statsModal').classList.add('active');
+          break;
+        case 'achievements':
+          renderAchievements();
+          document.getElementById('achievementsModal').classList.add('active');
+          break;
+        case 'games':
+          renderGames();
+          document.getElementById('gamesModal').classList.add('active');
+          break;
+        case 'daily':
+          renderDaily();
+          document.getElementById('dailyModal').classList.add('active');
+          break;
+        case 'friends':
+          renderFriends([]);
+          ws.send({ type: 'request_friends' });
+          document.getElementById('friendsModal').classList.add('active');
+          break;
+        case 'leaderboard':
+          renderLeaderboard();
+          document.getElementById('leaderboardModal').classList.add('active');
+          break;
+        case 'history':
+          renderHistory();
+          document.getElementById('historyModal').classList.add('active');
+          break;
+      }
+    }
+
+    function renderChats() {
+      const list = document.getElementById('userList');
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      let items = [];
+
+      if (currentTab === 'conversations') {
+        items = conversations.filter(c => {
+          const u = c.sender === username ? c.recipient : c.sender;
+          return u.toLowerCase().includes(query);
+        });
+      } else if (currentTab === 'online') {
+        items = connectedUsers.filter(u => u !== username && u.toLowerCase().includes(query));
+      } else if (currentTab === 'all') {
+        items = allUsers.filter(u => u !== username && u.toLowerCase().includes(query));
+      }
+
+      list.innerHTML = items.map(item => {
+        const isOnline = connectedUsers.includes(item);
+        const lastMsg = getLastMsgText(item);
+        const time = getLastTime(item);
+        const initial = item.charAt(0).toUpperCase();
+        const isAdmin = item.toLowerCase() === 'vortex';
+        
+        return `
+          <div class="user-item ${item === currentUser ? 'active' : ''}" onclick="selectUser('${item}')">
+            <div class="user-avatar" onclick="event.stopPropagation(); openProfile('${item}')">
+              ${initial}
+              ${isOnline ? '<div class="online-dot"></div>' : ''}
+            </div>
+            <div class="user-info">
+              <div class="user-top">
+                <div class="user-name-row">
+                  <div class="user-name">${item} ${isAdmin ? '<span class="admin-badge">✓</span>' : ''}</div>
+                </div>
+                <div class="user-time">${time}</div>
+              </div>
+              <div class="user-last-msg">${lastMsg || 'Начните общение'}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getLastMsgText(user) {
+      const userMsgs = conversations.filter(c =>
+        (c.sender === user && c.recipient === username) ||
+        (c.sender === username && c.recipient === user)
+      );
+      const last = userMsgs[userMsgs.length - 1];
+      if (!last) return '';
+      if (last.type === 'chat') return last.text;
+      if (last.type === 'photo') return '📷 Фото';
+      if (last.type === 'voice') return '🎤 Голосовое';
+      return '';
+    }
+
+    function getLastTime(user) {
+      const userMsgs = conversations.filter(c =>
+        (c.sender === user && c.recipient === username) ||
+        (c.sender === username && c.recipient === user)
+      );
+      const last = userMsgs[userMsgs.length - 1];
+      return last && last.timestamp ? new Date(last.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    }
+
+    function selectUser(user) {
+      currentUser = user;
+      document.getElementById('emptyChat').style.display = 'none';
+      document.getElementById('chatHeader').style.display = 'flex';
+      document.getElementById('messages').style.display = 'flex';
+      document.getElementById('inputArea').style.display = 'flex';
+      document.getElementById('chatAvatar').textContent = user.charAt(0).toUpperCase();
+      document.getElementById('chatName').textContent = user;
+      document.getElementById('chatStatus').textContent = connectedUsers.includes(user) ? 'онлайн' : 'оффлайн';
+      document.getElementById('chatStatus').className = 'chat-header-status' + (connectedUsers.includes(user) ? ' online' : '');
+      document.getElementById('sidebar').classList.add('hidden');
+      
+      messages = [];
+      ws.send({ type: 'get_chat', to: user });
+    }
+
+    function showSidebar() {
+      document.getElementById('sidebar').classList.remove('hidden');
+      currentUser = null;
+    }
+
+    function renderMessages() {
+      const container = document.getElementById('messages');
+      if (!currentUser) return;
+      
+      const chatMsgs = messages.filter(m =>
+        (m.sender === currentUser && m.recipient === username) ||
+        (m.sender === username && m.recipient === currentUser)
+      );
+
+      container.innerHTML = chatMsgs.map(m => {
+        const isSent = m.sender === username;
+        const time = new Date(m.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+        let content = '';
+        
+        if (m.type === 'chat') content = `<div class="msg-content">${escapeHtml(m.text)}</div>`;
+        else if (m.type === 'photo') content = `<img src="${m.url}">`;
+        else if (m.type === 'voice') content = `<audio controls src="${m.url}"></audio>`;
+        else if (m.type === 'gift') content = `<div class="gift-message">${m.giftName}</div>`;
+        else content = `<div class="msg-content">${escapeHtml(m.text || '')}</div>`;
+        
+        return `
+          <div class="message ${isSent ? 'sent' : 'received'}">
+            ${!isSent ? `<div class="msg-sender">${m.sender}</div>` : ''}
+            ${content}
+            <div class="msg-footer">
+              <span class="msg-time">${time}</span>
+              ${isSent ? '<span class="msg-check">✓✓</span>' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function showMessage(html) {
+      const container = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      if (!text || !currentUser) return;
+      
+      ws.send({ type: 'chat', sender: username, recipient: currentUser, text: text });
+      input.value = '';
+      input.style.height = 'auto';
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function updateUI() {
+      document.getElementById('myCoins').textContent = myData.coins || 0;
+      document.getElementById('myLevel').textContent = myData.level || 1;
+      document.getElementById('myAvatar').textContent = myData.avatar ? '' : username.charAt(0).toUpperCase();
+      if (myData.avatar) {
+        document.getElementById('myAvatar').innerHTML = `<img src="${myData.avatar}">`;
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function showAchievementUnlocked(achievement) {
+      const div = document.createElement('div');
+      div.className = 'achievement-unlocked';
+      div.innerHTML = `
+        <div class="icon">${achievement.icon}</div>
+        <div class="title">${achievement.name}</div>
+        <div class="desc">${achievement.description}</div>
+      `;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 3000);
+    }
+
+    // Gifts
+    function openGifts() {
+      if (!currentUser) { showToast('Выберите пользователя!', 'error'); return; }
+      document.getElementById('giftToUser').textContent = currentUser;
+      renderGifts();
+      document.getElementById('giftsModal').classList.add('active');
+    }
+
+    function renderGifts() {
+      const GIFTS = [
+        { type: 'rose', name: '🌹 Роза', price: 50, rarity: 'common' },
+        { type: 'heart', name: '❤️ Сердце', price: 100, rarity: 'common' },
+        { type: 'star', name: '⭐ Звезда', price: 75, rarity: 'common' },
+        { type: 'flower', name: '🌸 Цветок', price: 60, rarity: 'common' },
+        { type: 'coffee', name: '☕ Кофе', price: 30, rarity: 'common' },
+        { type: 'beer', name: '🍺 Пиво', price: 40, rarity: 'common' },
+        { type: 'cake', name: '🎂 Торт', price: 150, rarity: 'rare' },
+        { type: 'music', name: '🎵 Музыка', price: 80, rarity: 'common' },
+        { type: 'book', name: '📚 Книга', price: 45, rarity: 'common' },
+        { type: 'game', name: '🎮 Игра', price: 120, rarity: 'rare' },
+        { type: 'ring', name: '💍 Кольцо', price: 200, rarity: 'rare' },
+        { type: 'fire', name: '🔥 Огонь', price: 250, rarity: 'rare' },
+        { type: 'rocket', name: '🚀 Ракета', price: 300, rarity: 'rare' },
+        { type: 'crown', name: '👑 Корона', price: 500, rarity: 'epic' },
+        { type: 'diamond', name: '💎 Алмаз', price: 1000, rarity: 'epic' },
+        { type: 'car', name: '🚗 Машина', price: 800, rarity: 'epic' },
+        { type: 'house', name: '🏠 Дом', price: 1500, rarity: 'legendary' },
+        { type: 'planet', name: '🪐 Планета', price: 2000, rarity: 'legendary' }
+      ];
+      
+      const grid = document.getElementById('giftsGrid');
+      grid.innerHTML = GIFTS.map(gift => `
+        <div class="gift-item ${gift.rarity}" onclick="sendGift('${gift.type}', '${gift.name}', ${gift.price})">
+          <div class="gift-emoji">${gift.name.split(' ')[0]}</div>
+          <div class="gift-name">${gift.name.split(' ')[1] || gift.name}</div>
+          <div class="gift-price">💰 ${gift.price}</div>
+        </div>
+      `).join('');
+    }
+
+    function sendGift(type, name, price) {
+      if (myData.coins < price && !myData.isAdmin) {
+        showToast('Недостаточно монет!', 'error');
+        return;
+      }
+      
+      ws.send({
+        type: 'send_gift',
+        sender: username,
+        recipient: currentUser,
+        giftType: type,
+        giftName: name,
+        price: price
+      });
+      
+      closeModal('giftsModal');
+      showToast('Подарок отправлен!', 'success');
+      addHistory('gift', `Подарок для ${currentUser}`, price, 'negative');
+    }
+
+    function playGiftSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.5);
+      } catch(e) {}
+    }
+
+    // Clicker
+    function openClicker() {
+      document.getElementById('clickerCoins').textContent = myData.coins || 0;
+      document.getElementById('clickMultiplier').textContent = (1 + (myData.level - 1) * 0.1).toFixed(1);
+      document.getElementById('clickerModal').classList.add('active');
+    }
+
+    function doClick(event) {
+      const btn = event.target;
+      const rect = btn.getBoundingClientRect();
+      
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.textContent = '💰';
+      particle.style.left = (event.clientX - 12) + 'px';
+      particle.style.top = (event.clientY - 12) + 'px';
+      document.body.appendChild(particle);
+      setTimeout(() => particle.remove(), 1000);
+      
+      ws.send({ type: 'clicker', amount: 1 });
+      
+      btn.style.transform = 'scale(0.95)';
+      setTimeout(() => btn.style.transform = '', 150);
+    }
+
+    // Profile
+    function openProfile(user) {
+      user = user || currentUser;
+      if (!user) { showToast('Выберите пользователя!', 'error'); return; }
+      document.getElementById('profileModal').classList.add('active');
+      ws.send({ type: 'get_profile', username: user });
+    }
+
+    function renderProfile(userData, userGifts) {
+      const content = document.getElementById('profileContent');
+      const isAdmin = userData.isAdmin || userData.username.toLowerCase() === 'vortex';
+      const initial = userData.username.charAt(0).toUpperCase();
+      
+      let giftsHtml = '';
+      if (userGifts && userGifts.length > 0) {
+        giftsHtml = userGifts.map(g => `
+          <div class="profile-gift ${g.rarity || 'common'}" title="${g.giftName} от ${g.from}">
+            ${g.giftName.split(' ')[0]}
+          </div>
+        `).join('');
+      } else {
+        giftsHtml = '<p style="color: #64748b; text-align: center; grid-column: 1/-1; padding: 40px 0;">Нет подарков</p>';
+      }
+      
+      let adminHtml = '';
+      if (isAdmin) {
+        adminHtml = `
+          <div class="admin-panel">
+            <h3>👑 Администратор</h3>
+            <p style="color: #94a3b8; margin-bottom: 14px;">Выдайте админку:</p>
+            <input type="text" class="admin-input" id="adminUsername" placeholder="Логин пользователя">
+            <button class="admin-btn" onclick="giveAdmin()">Выдать админку</button>
+          </div>
+        `;
+      }
+      
+      content.innerHTML = `
+        <div class="profile-header">
+          <div class="profile-avatar">${initial}</div>
+          <div class="profile-name">${userData.username} ${isAdmin ? '<span class="admin-badge" style="color: #ef4444;">✓</span>' : ''}</div>
+          <div class="profile-coins">💰 ${userData.coins || 0} монет</div>
+          <div class="profile-level">⭐ Уровень ${userData.level || 1}</div>
+          ${isAdmin ? '<div style="margin-top: 14px; font-size: 14px; opacity: 0.9;">👑 Администратор</div>' : ''}
+        </div>
+        <h3 style="margin-bottom: 14px; color: #fff;">🎁 Подарки (${userGifts ? userGifts.length : 0})</h3>
+        <div class="profile-gifts">${giftsHtml}</div>
+        ${adminHtml}
+      `;
+    }
+
+    function giveAdmin() {
+      const target = document.getElementById('adminUsername').value.trim();
+      if (!target) { showToast('Введите логин!', 'error'); return; }
+      ws.send({ type: 'give_admin', targetUsername: target });
+    }
+
+    // Shop
+    function renderShop() {
+      const SHOP_ITEMS = [
+        { id: 'boost_click', name: 'Буст клика', icon: '⚡', price: 200, desc: 'x2 к кликам на 1 час' },
+        { id: 'boost_double', name: 'Двойные монеты', icon: '✨', price: 500, desc: 'x2 ко всем доходам на 1 час' },
+        { id: 'theme_purple', name: 'Тема фиолетовая', icon: '💜', price: 300, desc: 'Фиолетовая тема' },
+        { id: 'theme_gold', name: 'Тема золотая', icon: '👑', price: 1000, desc: 'Золотая тема' },
+        { id: 'badge_star', name: 'Значок звезда', icon: '🌟', price: 400, desc: 'Эксклюзивный значок' },
+        { id: 'badge_fire', name: 'Значок огонь', icon: '🔥', price: 600, desc: 'Эксклюзивный значок' }
+      ];
+      
+      const grid = document.getElementById('shopGrid');
+      grid.innerHTML = SHOP_ITEMS.map(item => `
+        <div class="shop-item">
+          <div class="icon">${item.icon}</div>
+          <div class="name">${item.name}</div>
+          <div class="desc">${item.desc}</div>
+          <div class="price">💰 ${item.price}</div>
+          <button onclick="buyItem('${item.id}', ${item.price})">Купить</button>
+        </div>
+      `).join('');
+    }
+
+    function buyItem(itemId, price) {
+      if (myData.coins < price) {
+        showToast('Недостаточно монет!', 'error');
+        return;
+      }
+      
+      ws.send({ type: 'buy_shop_item', itemId: itemId });
+    }
+
+    // Stats
+    function renderStats(data) {
+      const grid = document.getElementById('statsGrid');
+      grid.innerHTML = `
+        <div class="stat-card">
+          <div class="icon">👥</div>
+          <div class="value">${data.totalUsers || 0}</div>
+          <div class="label">Пользователей</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">💬</div>
+          <div class="value">${data.totalMessages || 0}</div>
+          <div class="label">Сообщений</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon">💰</div>
+          <div class="value">${data.avgCoins || 0}</div>
+          <div class="label">Средние монеты</div>
+        </div>
+      `;
+    }
+
+    // Achievements
+    function renderAchievements() {
+      const ACHIEVEMENTS = [
+        { id: 'first_login', name: 'Первый шаг', icon: '🎉', desc: 'Впервые вошли' },
+        { id: 'clicker_100', name: 'Кликер', icon: '👆', desc: '100 кликов' },
+        { id: 'clicker_1000', name: 'Мастер', icon: '💪', desc: '1000 кликов' },
+        { id: 'coins_1000', name: 'Богач', icon: '💰', desc: '1000 монет' },
+        { id: 'coins_10000', name: 'Миллионер', icon: '🤑', desc: '10000 монет' },
+        { id: 'level_5', name: 'Опытный', icon: '⭐', desc: '5 уровень' },
+        { id: 'level_10', name: 'Легенда', icon: '🏆', desc: '10 уровень' }
+      ];
+      
+      const grid = document.getElementById('achievementsGrid');
+      grid.innerHTML = ACHIEVEMENTS.map(ach => {
+        const unlocked = myData.achievements && myData.achievements.some(a => a.id === ach.id);
+        return `
+          <div class="achievement-item ${unlocked ? 'unlocked' : 'locked'}">
+            <div class="icon">${ach.icon}</div>
+            <div class="name">${ach.name}</div>
+            <div class="desc">${ach.desc}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Games
+    function renderGames() {
+      const GAMES = [
+        { id: 'dice', name: '🎲 Кости', desc: 'Угадайте число 1-6', bet: 50 },
+        { id: 'coin', name: '🪙 Монетка', desc: 'Орёл или решка', bet: 100 },
+        { id: 'slots', name: '🎰 Слоты', desc: '3 одинаковых', bet: 75 }
+      ];
+      
+      const grid = document.getElementById('gamesGrid');
+      grid.innerHTML = GAMES.map(game => `
+        <div class="game-item" onclick="playGame('${game.id}', '${game.name}', ${game.bet})">
+          <div class="icon">${game.name.split(' ')[0]}</div>
+          <div class="name">${game.name.split(' ')[1]}</div>
+          <div class="desc">${game.desc}</div>
+          <div class="bet">💰 Ставка: ${game.bet}</div>
+        </div>
+      `).join('');
+    }
+
+    function playGame(gameId, gameName, bet) {
+      if (myData.coins < bet) {
+        showToast('Недостаточно монет!', 'error');
+        return;
+      }
+      
+      let guess = 0;
+      if (gameId === 'dice') {
+        guess = prompt('Угадайте число от 1 до 6:');
+        if (!guess || guess < 1 || guess > 6) return;
+      } else if (gameId === 'coin') {
+        guess = prompt('Орёл (heads) или решка (tails)?');
+        if (!guess) return;
+      }
+      
+      ws.send({ type: 'play_game', gameId, bet, guess });
+    }
+
+    // Daily
+    function renderDaily() {
+      document.getElementById('dailyStreak').textContent = myData.dailyBonus || 0;
+    }
+
+    function claimDaily() {
+      ws.send({ type: 'request_daily' });
+    }
+
+    // Friends
+    function renderFriends(friends) {
+      const grid = document.getElementById('friendsGrid');
+      if (!friends || friends.length === 0) {
+        grid.innerHTML = '<p style="color: #64748b; text-align: center; grid-column: 1/-1; padding: 40px 0;">Нет друзей</p>';
+        return;
+      }
+      
+      grid.innerHTML = friends.map(f => {
+        const initial = f.charAt(0).toUpperCase();
+        return `
+          <div class="friend-item">
+            <div class="avatar">${initial}</div>
+            <div class="name">${f}</div>
+            <div class="status">🟢 онлайн</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function addFriend() {
+      const friend = document.getElementById('addFriendInput').value.trim();
+      if (!friend) { showToast('Введите имя!', 'error'); return; }
+      ws.send({ type: 'add_friend', friendUsername: friend });
+    }
+
+    // Leaderboard
+    function renderLeaderboard() {
+      const list = document.getElementById('leaderboardList');
+      list.innerHTML = '<p style="color: #64748b; text-align: center;">Загрузка...</p>';
+    }
+
+    // History
+    function renderHistory() {
+      const list = document.getElementById('historyList');
+      if (history.length === 0) {
+        list.innerHTML = '<p style="color: #64748b; text-align: center; padding: 40px 0;">История пуста</p>';
+        return;
+      }
+      
+      list.innerHTML = history.map(h => `
+        <div class="history-item">
+          <div class="icon">${h.type === 'gift' ? '🎁' : h.type === 'game' ? '🎮' : '💰'}</div>
+          <div class="info">
+            <div class="title">${h.title}</div>
+            <div class="time">${h.time}</div>
+          </div>
+          <div class="amount ${h.className}">${h.amount > 0 ? '+' : ''}${h.amount}</div>
+        </div>
+      `).join('');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('active');
+      }
+    }
+  </script>
+</body>
+</html>
