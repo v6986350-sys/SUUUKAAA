@@ -1,0 +1,15 @@
+{
+  "name": "purple-messenger",
+  "version": "5.0.0",
+  "description": "Telegram-style messenger with gifts and clicker",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7",
+    "bcryptjs": "^2.4.3",
+    "ws": "^8.16.0"
+  }
+}
+
