@@ -1,0 +1,5 @@
+node_modules/
+messenger.db
+uploads/
+*.log
+.DS_Store
