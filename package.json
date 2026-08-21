@@ -1,0 +1,15 @@
+{
+  "name": "purple-messenger",
+  "version": "7.0.0",
+  "description": "Full-featured messenger with 10 new features",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7",
+    "bcryptjs": "^2.4.3",
+    "ws": "^8.16.0"
+  }
+}
+
